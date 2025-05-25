@@ -63,6 +63,16 @@ const routes = [
         path: '/admin/slider-banners',
         name: 'admin.slider-banners',
         component: () => import('../views/SliderBanners.vue')
+    },
+    {
+        path: '/admin/categories',
+        name: 'admin.categories',
+        component: () => import('../views/CategoryManagement.vue')
+    },
+    {
+        path: '/admin/tags',
+        name: 'admin.tags',
+        component: () => import('../views/TagManagement.vue')
     }
 ]
 

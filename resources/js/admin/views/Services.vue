@@ -59,8 +59,21 @@
       </div>
     </el-card>
 
-    <el-dialog :title="editService ? 'Sửa Dịch vụ' : 'Thêm Dịch vụ'" v-model="showDialog" width="800px">
-      <el-form :model="form" :rules="rules" ref="serviceForm" label-width="120px" v-if="showDialog">
+    <el-dialog
+      v-model="showDialog"
+      :title="editService ? 'Chỉnh sửa dịch vụ' : 'Thêm dịch vụ mới'"
+      width="50%"
+      :close-on-click-modal="false"
+      :close-on-press-escape="false"
+      :show-close="false"
+    >
+      <el-form
+        ref="serviceForm"
+        :model="form"
+        :rules="rules"
+        label-width="120px"
+        class="service-form"
+      >
         <el-form-item label="Tên dịch vụ" prop="name">
           <el-input v-model="form.name" />
         </el-form-item>
@@ -124,6 +137,7 @@ const rules = {
   price: [{ type: 'number', min: 0, message: 'Giá phải >= 0', trigger: 'blur' }],
 }
 const search = ref('')
+const serviceForm = ref(null)
 
 const currentPage = ref(1);
 const pageSize = ref(10);
@@ -245,10 +259,10 @@ const openEdit = (service) => {
   showDialog.value = true
 }
 const saveService = async () => {
-  if (!formRef.value) return;
+  if (!serviceForm.value) return;
 
   try {
-    await formRef.value.validate();
+    await serviceForm.value.validate();
     saving.value = true;
 
     const formData = new FormData();
@@ -292,14 +306,15 @@ const saveService = async () => {
 
     let response;
     const apiUrl = editService.value
-      ? `/services/${editService.value.id}`
-      : '/services';
+      ? `/api/services/${editService.value.id}`
+      : '/api/services';
 
     if (editService.value) {
       formData.append('_method', 'PUT');
       response = await axios.post(apiUrl, formData, {
         headers: {
           'Content-Type': 'multipart/form-data',
+          'Authorization': `Bearer ${localStorage.getItem('token')}`
         },
       });
       ElMessage.success('Cập nhật dịch vụ thành công!');
@@ -307,6 +322,7 @@ const saveService = async () => {
       response = await axios.post(apiUrl, formData, {
         headers: {
           'Content-Type': 'multipart/form-data',
+          'Authorization': `Bearer ${localStorage.getItem('token')}`
         },
       });
       ElMessage.success('Thêm dịch vụ thành công!');

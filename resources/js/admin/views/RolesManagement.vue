@@ -30,15 +30,20 @@
       </div>
 
       <!-- Dialog for Add/Edit Role -->
-      <el-dialog :title="editRole ? 'Sửa Vai trò' : 'Thêm Vai trò'" v-model="showRoleDialog" width="500px">
+      <el-dialog :title="editRole ? 'Sửa Vai trò' : 'Thêm Vai trò'" v-model="showRoleDialog" width="600px">
         <el-form :model="roleForm" :rules="roleRules" ref="roleFormRef" label-width="120px">
           <el-form-item label="Tên Vai trò" prop="name">
             <el-input v-model="roleForm.name"></el-input>
           </el-form-item>
            <el-form-item label="Quyền hạn">
-                <el-checkbox-group v-model="roleForm.permissions">
-                    <el-checkbox v-for="permissionName in permissions" :key="permissionName" :value="permissionName">{{ permissionName }}</el-checkbox>
+              <div class="permissions-container" style="padding: 10px; border: 1px solid #eee; border-radius: 4px;">
+                <el-checkbox-group v-model="roleForm.permissions" class="permissions-grid">
+                    <div v-for="(permissionsInGroup, groupName) in groupedPermissions" :key="groupName">
+                      <h4>{{ groupName.charAt(0).toUpperCase() + groupName.slice(1) }}</h4>
+                      <el-checkbox v-for="permissionName in permissionsInGroup" :key="permissionName" :label="permissionName">{{ permissionName }}</el-checkbox>
+                    </div>
                 </el-checkbox-group>
+              </div>
            </el-form-item>
         </el-form>
         <template #footer>
@@ -68,6 +73,7 @@ import { ElMessage, ElMessageBox } from 'element-plus';
 
 const roles = ref([]);
 const permissions = ref([]);
+const groupedPermissions = ref({});
 const loadingRoles = ref(false);
 const loadingPermissions = ref(false);
 const showRoleDialog = ref(false);
@@ -94,9 +100,27 @@ const fetchPermissions = async () => {
   loadingPermissions.value = true;
   try {
     const response = await axios.get('/api/permissions');
-    console.log('API Permissions Response:', response.data); // Log API response
+    console.log('API Permissions Response:', response.data); // Keep this log
     permissions.value = response.data;
-    console.log('Permissions ref after assignment:', permissions.value); // Log permissions ref
+    
+    // Group permissions (updated for array of strings)
+    const tempGroupedPermissions = permissions.value.reduce((acc, permissionName) => {
+      if (typeof permissionName === 'string') {
+        const parts = permissionName.split('_', 2);
+        const groupName = parts.length > 1 ? parts[1] : 'General'; // Group by the part after the first underscore, default to 'General'
+        if (!acc[groupName]) {
+          acc[groupName] = [];
+        }
+        acc[groupName].push(permissionName);
+      } else {
+        console.warn('Skipping invalid permission data:', permissionName);
+      }
+      return acc;
+    }, {});
+    
+    groupedPermissions.value = tempGroupedPermissions;
+    console.log('Grouped Permissions:', groupedPermissions.value); // Add log for grouped permissions
+
   } catch (error) {
     ElMessage.error('Lỗi khi tải danh sách quyền hạn!');
     console.error(error);
@@ -213,9 +237,32 @@ onMounted(() => {
     margin-right: 4px;
 }
 
-.el-form-item__content .el-checkbox-group {
+.permissions-container {
+  /* Removed max-height and overflow */
+}
+
+.permissions-grid {
     display: grid;
-    grid-template-columns: repeat(auto-fill, minmax(150px, 1fr)); /* Adjust column width as needed */
+    grid-template-columns: repeat(auto-fill, minmax(200px, 1fr)); /* Adjust column width as needed */
     gap: 8px;
+    align-items: start; /* Align items to the start of their grid area */
+}
+
+.permissions-grid h4 {
+  grid-column: 1 / -1; /* Make the group header span all columns */
+  margin-top: 15px; /* Added some top margin for spacing */
+  margin-bottom: 8px; /* Adjusted bottom margin */
+  padding-bottom: 4px;
+  border-bottom: 1px solid #eee; /* Add a subtle line below the group header */
+}
+
+.permissions-grid .el-checkbox {
+  margin-right: 0; /* Remove default right margin from checkbox */
+  margin-bottom: 5px; /* Add some bottom margin for spacing between checkboxes */
+}
+
+.permissions-grid .el-checkbox__label {
+  word-break: break-all; /* Allow long permission names to wrap */
+  white-space: normal; /* Allow label text to wrap */
 }
 </style> 

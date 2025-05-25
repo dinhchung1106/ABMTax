@@ -58,6 +58,18 @@ class RolesAndPermissionsSeeder extends Seeder
         Permission::findOrCreate('edit_slider_banner');
         Permission::findOrCreate('delete_slider_banner');
 
+        // Add Category permissions
+        Permission::findOrCreate('view_categories');
+        Permission::findOrCreate('create_category');
+        Permission::findOrCreate('edit_category');
+        Permission::findOrCreate('delete_category');
+
+        // Add Tag permissions
+        Permission::findOrCreate('view_tags');
+        Permission::findOrCreate('create_tag');
+        Permission::findOrCreate('edit_tag');
+        Permission::findOrCreate('delete_tag');
+
         // Create Roles and assign existing permissions
         $superAdminRole = Role::findOrCreate('Super Admin');
         $contentManagerRole = Role::findOrCreate('Content Manager');
@@ -79,6 +91,18 @@ class RolesAndPermissionsSeeder extends Seeder
             'create_slider_banner',
             'edit_slider_banner',
             'delete_slider_banner',
+
+            // Add Category permissions for Content Manager
+            'view_categories',
+            'create_category',
+            'edit_category',
+            'delete_category',
+
+            // Add Tag permissions for Content Manager
+            'view_tags',
+            'create_tag',
+            'edit_tag',
+            'delete_tag',
         ];
         $contentManagerRole->givePermissionTo($contentPermissions);
 

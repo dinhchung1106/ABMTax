@@ -311,8 +311,10 @@ const saveUser = async () => {
 
     const formData = new FormData();
     
-    // Append avatar
-    appendAvatarToFormData(formData, 'avatar');
+    // Handle image upload
+    if (fileInputs.value.image) {
+      formData.append('image', fileInputs.value.image);
+    }
 
     // Append other fields
     for (const key in form.value) {
@@ -323,7 +325,7 @@ const saveUser = async () => {
         form.value[key].forEach(role => {
           formData.append('roles[]', role);
         });
-      } else if (key !== 'avatar') {
+      } else if (key !== 'image') {
         if (form.value[key] !== null && form.value[key] !== undefined) {
           formData.append(key, form.value[key]);
         }
@@ -332,8 +334,8 @@ const saveUser = async () => {
 
     // Handle image removal
     if (editUser.value) {
-      if (!avatarFile.value && !editUser.value.avatar) {
-        formData.append('remove_avatar', 1);
+      if (!fileInputs.value.image && !editUser.value.image) {
+        formData.append('remove_image', 1);
       }
     }
 

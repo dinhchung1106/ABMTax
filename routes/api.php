@@ -11,6 +11,8 @@ use App\Http\Controllers\Api\LessonController;
 use App\Http\Controllers\Api\CompanyInfoController;
 use App\Http\Controllers\API\RolePermissionController;
 use App\Http\Controllers\API\ContactController;
+use App\Http\Controllers\Api\CategoryController;
+use App\Http\Controllers\Api\TagController;
 
 /*
 |--------------------------------------------------------------------------
@@ -111,4 +113,18 @@ Route::middleware(['auth:sanctum', 'admin'])->group(function () {
     // Route::get('/slider-banners/{slider_banner}', [\App\Http\Controllers\API\SliderBannerController::class, 'show'])->middleware('permission:view_slider_banners,sanctum'); // Show route might not be strictly necessary for a simple list/form
     Route::put('/slider-banners/{slider_banner}', [\App\Http\Controllers\API\SliderBannerController::class, 'update'])->middleware('permission:edit_slider_banner,sanctum');
     Route::delete('/slider-banners/{slider_banner}', [\App\Http\Controllers\API\SliderBannerController::class, 'destroy'])->middleware('permission:delete_slider_banner,sanctum');
+
+    // Category routes with detailed permissions
+    Route::get('/categories', [CategoryController::class, 'index'])->middleware('permission:view_categories,sanctum');
+    Route::post('/categories', [CategoryController::class, 'store'])->middleware('permission:create_category,sanctum');
+    Route::get('/categories/{category}', [CategoryController::class, 'show'])->middleware('permission:view_categories,sanctum');
+    Route::put('/categories/{category}', [CategoryController::class, 'update'])->middleware('permission:edit_category,sanctum');
+    Route::delete('/categories/{category}', [CategoryController::class, 'destroy'])->middleware('permission:delete_category,sanctum');
+
+    // Tag routes with detailed permissions
+    Route::get('/tags', [TagController::class, 'index'])->middleware('permission:view_tags,sanctum');
+    Route::post('/tags', [TagController::class, 'store'])->middleware('permission:create_tag,sanctum');
+    Route::get('/tags/{tag}', [TagController::class, 'show'])->middleware('permission:view_tags,sanctum');
+    Route::put('/tags/{tag}', [TagController::class, 'update'])->middleware('permission:edit_tag,sanctum');
+    Route::delete('/tags/{tag}', [TagController::class, 'destroy'])->middleware('permission:delete_tag,sanctum');
 });

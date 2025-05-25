@@ -13,7 +13,22 @@
           </template>
         </el-table-column>
         <el-table-column prop="title" label="Tiêu đề" />
-        <el-table-column prop="category" label="Chuyên mục" width="120" />
+        <el-table-column label="Tác giả" width="120">
+          <template #default="{ row }">
+            {{ row.author_name || 'N/A' }}
+          </template>
+        </el-table-column>
+        <el-table-column label="Chuyên mục" width="120">
+          <template #default="{ row }">
+            {{ row.category_name }}
+          </template>
+        </el-table-column>
+        <el-table-column label="Thẻ (Tags)" width="150">
+          <template #default="{ row }">
+            <el-tag v-for="tag in row.tags" :key="tag.id" size="small" style="margin-right: 4px; margin-bottom: 4px;">{{ tag.name }}</el-tag>
+          </template>
+        </el-table-column>
+        <el-table-column prop="views" label="Lượt xem" width="100" />
         <el-table-column prop="status" label="Trạng thái" width="100">
           <template #default="{ row }">
             <el-tag :type="row.status ? 'success' : 'info'">{{ row.status ? 'Hiện' : 'Ẩn' }}</el-tag>
@@ -47,8 +62,15 @@
         <el-form-item label="Tiêu đề" prop="title">
           <el-input v-model="form.title" />
         </el-form-item>
-        <el-form-item label="Chuyên mục" prop="category">
-          <el-input v-model="form.category" />
+        <el-form-item label="Chuyên mục" prop="category_id">
+          <el-select v-model="form.category_id">
+            <el-option v-for="category in categories" :key="category.id" :label="category.name" :value="category.id" />
+          </el-select>
+        </el-form-item>
+        <el-form-item label="Thẻ (Tags)" prop="tag_ids">
+          <el-select v-model="form.tag_ids" multiple placeholder="Chọn thẻ">
+            <el-option v-for="tag in allTags" :key="tag.id" :label="tag.name" :value="tag.id" />
+          </el-select>
         </el-form-item>
         <el-form-item label="Ảnh" prop="image">
           <el-upload
@@ -86,14 +108,17 @@ import { ElMessage, ElMessageBox } from 'element-plus'
 import { useImageUpload } from '../composables/useImageUpload'
 
 const news = ref([])
+const categories = ref([]);
+const allTags = ref([]);
 const loading = ref(false)
 const showDialog = ref(false)
 const saving = ref(false)
 const editNews = ref(null)
-const form = ref({ title: '', content: '', image: '', category: '', status: true })
+const form = ref({ title: '', content: '', image: '', category_id: null, tag_ids: [], status: true })
 const rules = {
   title: [{ required: true, message: 'Vui lòng nhập tiêu đề', trigger: 'blur' }],
   content: [{ required: true, message: 'Vui lòng nhập nội dung', trigger: 'blur' }],
+  category_id: [{ required: true, message: 'Vui lòng chọn chuyên mục', trigger: 'change' }],
 }
 const search = ref('')
 
@@ -132,6 +157,26 @@ const fetchNews = async (options = {}) => {
   }
 }
 
+const fetchCategories = async () => {
+  try {
+    const response = await axios.get('/api/categories');
+    categories.value = response.data;
+  } catch (error) {
+    ElMessage.error('Lỗi khi tải danh sách danh mục!');
+    console.error(error);
+  }
+};
+
+const fetchAllTags = async () => {
+  try {
+    const response = await axios.get('/api/tags');
+    allTags.value = response.data;
+  } catch (error) {
+    ElMessage.error('Lỗi khi tải danh sách thẻ (tags)!');
+    console.error(error);
+  }
+};
+
 const filteredNews = computed(() => {
   if (!search.value) return news.value
   return news.value.filter(n =>
@@ -157,39 +202,60 @@ const {
 
 const openAdd = () => {
   editNews.value = null;
-  form.value = { title: '', content: '', status: true };
+  form.value = { title: '', content: '', category_id: null, tag_ids: [], status: true };
   resetNewsImageState();
   showDialog.value = true;
+  // Set default category for new news items
+  if (categories.value.length > 0) {
+    form.value.category_id = categories.value[0].id;
+  }
 };
 
-const openEdit = (news) => {
-  editNews.value = news;
+const openEdit = (newsItem) => {
+  editNews.value = newsItem;
   form.value = { 
-    title: news.title, 
-    content: news.content, 
-    status: !!news.status 
+    title: newsItem.title, 
+    content: newsItem.content, 
+    category_id: newsItem.category_id,
+    tag_ids: newsItem.tags ? newsItem.tags.map(tag => tag.id) : [],
+    status: !!newsItem.status 
   };
   resetNewsImageState();
-  newsImagePreviewUrl.value = getNewsImageUrl(news.image);
+  newsImagePreviewUrl.value = getNewsImageUrl(newsItem.image);
   showDialog.value = true;
 };
 
 const saveNews = async () => {
-  if (!formRef.value) return;
+  if (!newsForm.value) return;
 
   try {
-    await formRef.value.validate();
+    await newsForm.value.validate();
     saving.value = true;
 
     const formData = new FormData();
     
-    // Append news image
-    appendNewsImageToFormData(formData, 'image');
+    // Append news image (if a new file is selected)
+    if (newsImageFile.value) {
+      formData.append('image', newsImageFile.value);
+    } else if (editNews.value && editNews.value.image && !newsImagePreviewUrl.value) {
+      // Case: Image was present, but is now removed
+      formData.append('remove_image', 1);
+    }
 
     // Append other fields
     for (const key in form.value) {
       if (key === 'status') {
         formData.append(key, form.value[key] ? 1 : 0);
+      } else if (key === 'category_id') {
+        if (form.value[key] !== null) {
+          formData.append(key, form.value[key]);
+        }
+      } else if (key === 'tag_ids') {
+        if (form.value[key] && form.value[key].length > 0) {
+          form.value[key].forEach(tagId => {
+            formData.append('tag_ids[]', tagId);
+          });
+        }
       } else if (key !== 'image') {
         if (form.value[key] !== null && form.value[key] !== undefined) {
           formData.append(key, form.value[key]);
@@ -197,23 +263,17 @@ const saveNews = async () => {
       }
     }
 
-    // Handle image removal
-    if (editNews.value) {
-      if (!newsImageFile.value && !editNews.value.image) {
-        formData.append('remove_image', 1);
-      }
-    }
-
     let response;
     const apiUrl = editNews.value
-      ? `/news/${editNews.value.id}`
-      : '/news';
+      ? `/api/news/${editNews.value.id}`
+      : '/api/news';
 
     if (editNews.value) {
       formData.append('_method', 'PUT');
       response = await axios.post(apiUrl, formData, {
         headers: {
           'Content-Type': 'multipart/form-data',
+          'Authorization': `Bearer ${localStorage.getItem('token')}`
         },
       });
       ElMessage.success('Cập nhật tin tức thành công!');
@@ -221,6 +281,7 @@ const saveNews = async () => {
       response = await axios.post(apiUrl, formData, {
         headers: {
           'Content-Type': 'multipart/form-data',
+          'Authorization': `Bearer ${localStorage.getItem('token')}`
         },
       });
       ElMessage.success('Thêm tin tức thành công!');
@@ -272,7 +333,11 @@ const handlePageChange = (newPage) => {
   fetchNews({ page: newPage, search: search.value });
 };
 
-onMounted(fetchNews)
+onMounted(() => {
+  fetchNews();
+  fetchCategories();
+  fetchAllTags();
+});
 </script>
 
 <style scoped>
@@ -306,5 +371,32 @@ onMounted(fetchNews)
   margin-top: 16px;
   display: flex;
   justify-content: flex-end;
+}
+.news-upload .el-upload {
+  border: 1px dashed var(--el-border-color);
+  border-radius: 6px;
+  cursor: pointer;
+  position: relative;
+  overflow: hidden;
+  transition: var(--el-transition-duration-fast);
+}
+
+.news-upload .el-upload:hover {
+  border-color: var(--el-color-primary);
+}
+
+.el-icon.news-uploader-icon {
+  font-size: 28px;
+  color: #8c939d;
+  width: 178px;
+  height: 178px;
+  text-align: center;
+}
+
+.news-image-preview {
+  width: 178px;
+  height: 178px;
+  display: block;
+  object-fit: cover;
 }
 </style> 

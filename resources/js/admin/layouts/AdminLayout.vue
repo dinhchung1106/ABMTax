@@ -12,6 +12,8 @@
         <el-menu-item index="/admin/users"><el-icon><User /></el-icon><span>Users</span></el-menu-item>
         <el-menu-item index="/admin/services"><el-icon><Suitcase /></el-icon><span>Services</span></el-menu-item>
         <el-menu-item index="/admin/news"><el-icon><Document /></el-icon><span>News</span></el-menu-item>
+        <el-menu-item index="/admin/categories"><el-icon><Folder /></el-icon><span>Quản lý Danh mục</span></el-menu-item>
+        <el-menu-item index="/admin/tags"><el-icon><CollectionTag /></el-icon><span>Quản lý Thẻ</span></el-menu-item>
         <el-menu-item index="/admin/courses"><el-icon><Reading /></el-icon><span>Courses</span></el-menu-item>
         <el-menu-item index="/admin/contacts"><el-icon><Message /></el-icon><span>Contacts</span></el-menu-item>
         <el-menu-item index="/admin/slider-banners"><el-icon><Picture /></el-icon><span>Quản lý Slider Banner</span></el-menu-item>
@@ -70,7 +72,7 @@
 import { ref } from 'vue'
 import { useRouter } from 'vue-router'
 import { ElIcon } from 'element-plus'
-import { Odometer, User, Suitcase, Document, Reading, Message, OfficeBuilding, Lock, EditPen, Picture } from '@element-plus/icons-vue'
+import { Odometer, User, Suitcase, Document, Reading, Message, OfficeBuilding, Lock, EditPen, Picture, Folder, CollectionTag } from '@element-plus/icons-vue'
 
 const router = useRouter()
 const collapsed = ref(false)
