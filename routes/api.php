@@ -13,6 +13,8 @@ use App\Http\Controllers\API\RolePermissionController;
 use App\Http\Controllers\API\ContactController;
 use App\Http\Controllers\Api\CategoryController;
 use App\Http\Controllers\Api\TagController;
+use App\Http\Controllers\Admin\SessionController;
+use App\Http\Controllers\Admin\LessonController as AdminLessonController;
 
 /*
 |--------------------------------------------------------------------------
@@ -33,6 +35,7 @@ Route::post('/login', [AuthController::class, 'login']);
 Route::middleware('auth:sanctum')->group(function () {
     Route::post('/logout', [AuthController::class, 'logout']);
     Route::get('/me', [AuthController::class, 'me']);
+    Route::put('/me', [AuthController::class, 'updateMe']);
     // Route mẫu cho admin
     Route::middleware('admin')->get('/admin/dashboard', function() {
         return response()->json(['message' => 'Welcome admin!']);
@@ -41,7 +44,9 @@ Route::middleware('auth:sanctum')->group(function () {
 
 // Route fallback cho admin SPA
 Route::get('/admin/{any}', function () {
-    return view('admin');
+    // Fetch Company Info to pass to the admin view
+    $companyInfo = \App\Models\CompanyInfo::first(); // Assuming you fetch the first record
+    return view('admin', compact('companyInfo'));
 })->where('any', '.*');
 
 Route::middleware(['auth:sanctum', 'admin'])->group(function () {
@@ -64,7 +69,7 @@ Route::middleware(['auth:sanctum', 'admin'])->group(function () {
     Route::post('/news', [NewsController::class, 'store'])->middleware('permission:create_post,sanctum');
     Route::get('/news/{news}', [NewsController::class, 'show'])->middleware('permission:view_posts,sanctum');
     Route::put('/news/{news}', [NewsController::class, 'update'])->middleware('permission:edit_post,sanctum');
-    Route::delete('/news/{news}', [NewsController::class, 'destroy'])->middleware('permission:delete_post,sanctum');
+    Route::delete('/news/{news}', [NewsController::class, 'destroy'])->middleware('permission:delete_news,sanctum');
     Route::post('/news/upload-image', [NewsController::class, 'uploadImage'])->middleware('permission:create_post,sanctum');
 
     // Course routes with detailed permissions
@@ -99,10 +104,10 @@ Route::middleware(['auth:sanctum', 'admin'])->group(function () {
     // Get current user's permissions - no special permission required
     Route::get('/permissions', [RolePermissionController::class, 'getPermissions']);
 
-    // Contact routes with detailed permissions
-    Route::get('/contacts', [ContactController::class, 'index'])->middleware('permission:view_contact,sanctum');
-    Route::put('/contacts/{contact}', [ContactController::class, 'update'])->middleware('permission:reply_contact,sanctum');
-    Route::delete('/contacts/{contact}', [ContactController::class, 'destroy'])->middleware('permission:delete_contact,sanctum');
+    // Contact routes with permissions
+    Route::get('/contacts', [ContactController::class, 'index'])->middleware('permission:view_contacts,sanctum');
+    Route::get('/contacts/{contact}', [ContactController::class, 'show'])->middleware('permission:view_contacts,sanctum');
+    Route::delete('/contacts/{contact}', [ContactController::class, 'destroy'])->middleware('permission:delete_contacts,sanctum');
 
     // Reports route (if any)
     // Route::get('/reports', [ReportController::class, 'index'])->middleware('permission:view_report,sanctum');
@@ -127,4 +132,16 @@ Route::middleware(['auth:sanctum', 'admin'])->group(function () {
     Route::get('/tags/{tag}', [TagController::class, 'show'])->middleware('permission:view_tags,sanctum');
     Route::put('/tags/{tag}', [TagController::class, 'update'])->middleware('permission:edit_tag,sanctum');
     Route::delete('/tags/{tag}', [TagController::class, 'destroy'])->middleware('permission:delete_tag,sanctum');
+
+    // Session Routes
+    Route::get('/courses/{course}/sessions', [SessionController::class, 'index'])->middleware('permission:view_courses,sanctum');
+    Route::post('/courses/{course}/sessions', [SessionController::class, 'store'])->middleware('permission:edit_course,sanctum');
+    Route::put('/sessions/{session}', [SessionController::class, 'update'])->middleware('permission:edit_course,sanctum');
+    Route::delete('/sessions/{session}', [SessionController::class, 'destroy'])->middleware('permission:edit_course,sanctum');
+
+    // Lesson Routes
+    Route::get('/sessions/{session}/lessons', [AdminLessonController::class, 'index'])->middleware('permission:view_courses,sanctum');
+    Route::post('/sessions/{session}/lessons', [AdminLessonController::class, 'store'])->middleware('permission:edit_course,sanctum');
+    Route::put('/lessons/{lesson}', [AdminLessonController::class, 'update'])->middleware('permission:edit_course,sanctum');
+    Route::delete('/lessons/{lesson}', [AdminLessonController::class, 'destroy'])->middleware('permission:edit_course,sanctum');
 });

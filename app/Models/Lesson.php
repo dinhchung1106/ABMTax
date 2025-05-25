@@ -10,9 +10,26 @@ class Lesson extends Model
     use HasFactory;
 
     protected $fillable = [
-        'course_id', 'name', 'description', 'duration', 'order', 'status',
+        'session_id',
+        'course_id',
+        'title',
+        'description',
+        'content',
+        'order',
+        'status'
     ];
 
+    /**
+     * Get the session that owns the lesson.
+     */
+    public function session()
+    {
+        return $this->belongsTo(Session::class);
+    }
+
+    /**
+     * Get the course that owns the lesson.
+     */
     public function course()
     {
         return $this->belongsTo(Course::class);

@@ -7,27 +7,15 @@
       </div>
       <el-table :data="filteredNews" style="width: 100%" v-loading="loading">
         <el-table-column prop="id" label="#" width="60" />
-        <el-table-column prop="image" label="Ảnh" width="80">
-          <template #default="{ row }">
-            <img v-if="row.image" :src="row.image" class="news-thumb" />
-          </template>
-        </el-table-column>
         <el-table-column prop="title" label="Tiêu đề" />
-        <el-table-column label="Tác giả" width="120">
+        <el-table-column prop="slug" label="Slug" />
+        <el-table-column label="Ảnh" width="100">
           <template #default="{ row }">
-            {{ row.author_name || 'N/A' }}
+            <img :src="row.image ? `/storage/${row.image}` : '/uploads/no-image-available.png'" alt="News Image" style="width: 60px; height: 60px; object-fit: cover; border-radius: 4px; cursor: pointer;" @click="viewImage([row.image ? `/storage/${row.image}` : '/uploads/no-image-available.png'], 0)" />
           </template>
         </el-table-column>
-        <el-table-column label="Chuyên mục" width="120">
-          <template #default="{ row }">
-            {{ row.category_name }}
-          </template>
-        </el-table-column>
-        <el-table-column label="Thẻ (Tags)" width="150">
-          <template #default="{ row }">
-            <el-tag v-for="tag in row.tags" :key="tag.id" size="small" style="margin-right: 4px; margin-bottom: 4px;">{{ tag.name }}</el-tag>
-          </template>
-        </el-table-column>
+        <el-table-column prop="category_name" label="Danh mục" width="120" />
+        <el-table-column prop="author_name" label="Tác giả" width="120" />
         <el-table-column prop="views" label="Lượt xem" width="100" />
         <el-table-column prop="status" label="Trạng thái" width="100">
           <template #default="{ row }">
@@ -37,7 +25,7 @@
         <el-table-column label="Hành động" width="160">
           <template #default="{ row }">
             <el-button size="small" @click="openEdit(row)">Sửa</el-button>
-            <el-popconfirm title="Xác nhận xóa tin này?" @confirm="removeNews(row.id)">
+            <el-popconfirm title="Xác nhận xóa tin tức này?" @confirm="removeNews(row.id)">
               <template #reference>
                 <el-button size="small" type="danger">Xóa</el-button>
               </template>
@@ -57,40 +45,68 @@
       </div>
     </el-card>
 
-    <el-dialog :title="editNews ? 'Sửa Tin tức' : 'Thêm Tin tức'" v-model="showDialog" width="500px">
-      <el-form :model="form" :rules="rules" ref="newsForm" label-width="100px">
+    <el-dialog
+      v-model="showDialog"
+      :title="editNews ? 'Chỉnh sửa tin tức' : 'Thêm tin tức mới'"
+      width="50%"
+      :close-on-click-modal="false"
+      :close-on-press-escape="false"
+      :show-close="false"
+    >
+      <el-form
+        ref="newsForm"
+        :model="form"
+        :rules="rules"
+        label-width="120px"
+        class="news-form"
+      >
         <el-form-item label="Tiêu đề" prop="title">
           <el-input v-model="form.title" />
         </el-form-item>
-        <el-form-item label="Chuyên mục" prop="category_id">
-          <el-select v-model="form.category_id">
-            <el-option v-for="category in categories" :key="category.id" :label="category.name" :value="category.id" />
+        <el-form-item label="Nội dung" prop="content" class="content-editor-item">
+          <ckeditor :editor="ClassicEditor" v-model="form.content" :config="editorConfig"></ckeditor>
+        </el-form-item>
+        <el-form-item label="Danh mục" prop="category_id">
+          <el-select v-model="form.category_id" placeholder="Chọn danh mục">
+            <el-option
+              v-for="category in categories"
+              :key="category.id"
+              :label="category.name"
+              :value="category.id"
+            />
           </el-select>
         </el-form-item>
-        <el-form-item label="Thẻ (Tags)" prop="tag_ids">
-          <el-select v-model="form.tag_ids" multiple placeholder="Chọn thẻ">
-            <el-option v-for="tag in allTags" :key="tag.id" :label="tag.name" :value="tag.id" />
-          </el-select>
-        </el-form-item>
-        <el-form-item label="Ảnh" prop="image">
-          <el-upload
-            class="news-upload"
-            action="/api/news/upload-image"
-            :show-file-list="false"
-            :on-success="handleUploadSuccess"
-            :before-upload="beforeUpload"
-            :headers="uploadHeaders"
-            accept="image/*"
+        <el-form-item label="Tags" prop="tag_ids">
+          <el-select
+            v-model="form.tag_ids"
+            multiple
+            filterable
+            allow-create
+            default-first-option
+            placeholder="Chọn hoặc tạo tags mới"
           >
-            <img v-if="form.image" :src="form.image" class="news-image-preview" />
-            <el-button v-else size="small" type="primary">Chọn ảnh</el-button>
-          </el-upload>
+            <el-option
+              v-for="tag in tags"
+              :key="tag.id"
+              :label="tag.name"
+              :value="tag.id"
+            />
+          </el-select>
         </el-form-item>
-        <el-form-item label="Nội dung" prop="content">
-          <el-input v-model="form.content" type="textarea" rows="4" />
+        <el-form-item label="SEO Keywords" prop="seo_keywords">
+          <el-input v-model="form.seo_keywords" />
+        </el-form-item>
+        <el-form-item label="Lượt xem" prop="views">
+          <el-input-number v-model="form.views" :min="0" :step="1" style="width: 100%;" />
         </el-form-item>
         <el-form-item label="Trạng thái" prop="status">
           <el-switch v-model="form.status" active-text="Hiện" inactive-text="Ẩn" />
+        </el-form-item>
+
+        <el-form-item label="Ảnh đại diện">
+          <input type="file" accept="image/*" @change="onFileChange($event, 'image')" :key="mainImageInputKey"/>
+          <img :src="mainImagePreviewUrl || (editNews && editNews.image ? `/storage/${editNews.image}` : '/uploads/no-image-available.png')" alt="preview" style="max-width: 100px; margin-top: 6px; cursor: pointer;" @error="mainImagePreviewUrl = ''" @click="viewImage([mainImagePreviewUrl || (editNews && editNews.image ? `/storage/${editNews.image}` : '/uploads/no-image-available.png')], 0)"/>
+          <el-button v-if="mainImagePreviewUrl || (editNews && editNews.image)" type="text" @click="removeMainImage()">[x]</el-button>
         </el-form-item>
       </el-form>
       <template #footer>
@@ -98,6 +114,7 @@
         <el-button type="primary" :loading="saving" @click="saveNews">Lưu</el-button>
       </template>
     </el-dialog>
+    <el-image-viewer v-if="imageViewerVisible" :url-list="imageViewerUrlList" :initial-index="imageViewerInitialIndex" @close="imageViewerVisible = false" />
   </div>
 </template>
 
@@ -106,6 +123,9 @@ import { ref, computed, onMounted } from 'vue'
 import axios from 'axios'
 import { ElMessage, ElMessageBox } from 'element-plus'
 import { useImageUpload } from '../composables/useImageUpload'
+import { Ckeditor } from '@ckeditor/ckeditor5-vue'
+import ClassicEditor from '@ckeditor/ckeditor5-build-classic'
+import { ElImageViewer } from 'element-plus'
 
 const news = ref([])
 const categories = ref([]);
@@ -114,7 +134,8 @@ const loading = ref(false)
 const showDialog = ref(false)
 const saving = ref(false)
 const editNews = ref(null)
-const form = ref({ title: '', content: '', image: '', category_id: null, tag_ids: [], status: true })
+const form = ref({ title: '', content: '', image: '', category_id: null, tag_ids: [], status: true, seo_keywords: '', views: 0 })
+const newsForm = ref(null)
 const rules = {
   title: [{ required: true, message: 'Vui lòng nhập tiêu đề', trigger: 'blur' }],
   content: [{ required: true, message: 'Vui lòng nhập nội dung', trigger: 'blur' }],
@@ -200,12 +221,13 @@ const {
   storagePath: 'uploads/news',
 });
 
+const editorConfig = ref({ minHeight: '200px' })
+
 const openAdd = () => {
   editNews.value = null;
-  form.value = { title: '', content: '', category_id: null, tag_ids: [], status: true };
+  form.value = { title: '', content: '', category_id: null, tag_ids: [], status: true, seo_keywords: '', views: 0 };
   resetNewsImageState();
   showDialog.value = true;
-  // Set default category for new news items
   if (categories.value.length > 0) {
     form.value.category_id = categories.value[0].id;
   }
@@ -213,12 +235,15 @@ const openAdd = () => {
 
 const openEdit = (newsItem) => {
   editNews.value = newsItem;
-  form.value = { 
-    title: newsItem.title, 
-    content: newsItem.content, 
+  form.value = {
+    title: newsItem.title,
+    content: newsItem.content,
     category_id: newsItem.category_id,
     tag_ids: newsItem.tags ? newsItem.tags.map(tag => tag.id) : [],
-    status: !!newsItem.status 
+    status: !!newsItem.status,
+    seo_keywords: newsItem.seo_keywords || '',
+    views: newsItem.views || 0,
+    image: newsItem.image || ''
   };
   resetNewsImageState();
   newsImagePreviewUrl.value = getNewsImageUrl(newsItem.image);
@@ -226,7 +251,10 @@ const openEdit = (newsItem) => {
 };
 
 const saveNews = async () => {
-  if (!newsForm.value) return;
+  if (!newsForm.value) {
+    ElMessage.error('Form không tồn tại!');
+    return;
+  }
 
   try {
     await newsForm.value.validate();
@@ -240,6 +268,9 @@ const saveNews = async () => {
     } else if (editNews.value && editNews.value.image && !newsImagePreviewUrl.value) {
       // Case: Image was present, but is now removed
       formData.append('remove_image', 1);
+    } else if (editNews.value && editNews.value.image) {
+      // Keep existing image
+      formData.append('image', editNews.value.image);
     }
 
     // Append other fields
@@ -256,7 +287,7 @@ const saveNews = async () => {
             formData.append('tag_ids[]', tagId);
           });
         }
-      } else if (key !== 'image') {
+      } else if (key !== 'image') { // Skip image field as it's handled separately
         if (form.value[key] !== null && form.value[key] !== undefined) {
           formData.append(key, form.value[key]);
         }
@@ -318,20 +349,21 @@ const removeNews = async (id) => {
     ElMessage.error('Không thể xóa tin!')
   }
 }
-const handleUploadSuccess = (res) => {
-  form.value.image = res.url
-}
-const beforeUpload = (file) => {
-  const isImage = file.type.startsWith('image/')
-  const isLt2M = file.size / 1024 / 1024 < 2
-  if (!isImage) ElMessage.error('Chỉ chọn file ảnh!')
-  if (!isLt2M) ElMessage.error('Ảnh phải nhỏ hơn 2MB!')
-  return isImage && isLt2M
-}
 
 const handlePageChange = (newPage) => {
   fetchNews({ page: newPage, search: search.value });
 };
+
+const imageViewerVisible = ref(false);
+const imageViewerUrlList = ref([]);
+const imageViewerInitialIndex = ref(0);
+
+const viewImage = (urlList, initialIndex = 0) => {
+  console.log('Viewing image(s):', urlList, 'starting from index:', initialIndex);
+  imageViewerUrlList.value = urlList;
+  imageViewerInitialIndex.value = initialIndex;
+  imageViewerVisible.value = true;
+}
 
 onMounted(() => {
   fetchNews();
@@ -391,6 +423,11 @@ onMounted(() => {
   width: 178px;
   height: 178px;
   text-align: center;
+}
+
+/* Adjust line spacing within CKEditor */
+.content-editor-item .ck-editor__editable p {
+  margin-bottom: 0.5em; /* Adjust this value as needed */
 }
 
 .news-image-preview {

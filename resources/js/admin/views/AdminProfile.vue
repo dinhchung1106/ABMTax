@@ -132,7 +132,7 @@ const {
 } = useImageUpload({
   maxSize: 2048,
   allowedTypes: ['image/jpeg', 'image/png', 'image/jpg', 'image/gif'],
-  storagePath: 'uploads/profiles',
+  storagePath: 'uploads/users',
 });
 
 // Handle file change from input type=file
@@ -179,9 +179,26 @@ const clearFile = (type) => {
 const fetchAdminProfile = async () => {
   loading.value = true;
   try {
-    const response = await axios.get('/api/admin/profile');
-    profileForm.value = response.data;
-    profileImagePreviewUrl.value = getProfileImageUrl(response.data.avatar);
+    const response = await axios.get('/api/me');
+    // Assuming the /api/me endpoint returns user data directly
+    const userData = response.data;
+
+    // Populate the form with user data
+    profileForm.value.name = userData.name;
+    profileForm.value.email = userData.email;
+    profileForm.value.phone = userData.phone || ''; // Handle nullable fields
+    profileForm.value.address = userData.address || ''; // Handle nullable fields
+    profileForm.value.date_of_birth = userData.date_of_birth ? new Date(userData.date_of_birth) : null; // Convert string to Date object
+    profileForm.value.image = userData.image || ''; // Assuming 'image' is the field name for the profile picture URL
+    profileForm.value.roles = userData.roles || []; // Assuming roles are returned
+
+    // Set image preview if an image URL exists
+    if (profileForm.value.image) {
+       profileImagePreviewUrl.value = getProfileImageUrl(profileForm.value.image);
+    } else {
+       profileImagePreviewUrl.value = '';
+    }
+
   } catch (error) {
     console.error('Error fetching profile:', error);
     ElMessage.error('Lỗi khi tải thông tin profile!');
@@ -198,29 +215,44 @@ const saveProfile = async () => {
     savingProfile.value = true;
 
     const formData = new FormData();
-    
-    // Append profile image
-    appendProfileImageToFormData(formData, 'avatar');
+
+    // Use the composable function to append the image data
+    // It handles adding the new file, the existing URL, or the remove_image flag
+    appendProfileImageToFormData(formData, 'image', profileForm.value.image);
 
     // Append other fields
     for (const key in profileForm.value) {
       if (key === 'status') {
         formData.append(key, profileForm.value[key] ? 1 : 0);
-      } else if (key !== 'avatar') {
+      } else if (key === 'date_of_birth') {
+          // Format date_of_birth to YYYY-MM-DD string if it's a Date object
+          if (profileForm.value[key] instanceof Date && !isNaN(profileForm.value[key])) {
+              const date = profileForm.value[key];
+              const formattedDate = date.getFullYear() + '-' +
+                                  ('0' + (date.getMonth() + 1)).slice(-2) + '-' +
+                                  ('0' + date.getDate()).slice(-2);
+              formData.append(key, formattedDate);
+          } else if (profileForm.value[key] !== null && profileForm.value[key] !== undefined) {
+              // Append existing string date or other non-Date value if any
+              formData.append(key, profileForm.value[key]);
+          } else {
+              formData.append(key, ''); // Append empty string for null/undefined
+          }
+      } else if (key !== 'image' && key !== 'roles') { // Exclude image, roles, and handled date_of_birth
         if (profileForm.value[key] !== null && profileForm.value[key] !== undefined) {
           formData.append(key, profileForm.value[key]);
         }
       }
     }
 
-    // Handle image removal
-    if (!profileImageFile.value && !profileForm.value.avatar) {
-      formData.append('remove_avatar', 1);
-    }
+    // Add the _method field for PUT requests with FormData
+    formData.append('_method', 'PUT');
 
-    const response = await axios.post('/api/admin/profile', formData, {
+    // Use the correct endpoint for updating profile information
+    const response = await axios.post('/api/me', formData, {
       headers: {
         'Content-Type': 'multipart/form-data',
+        'Authorization': `Bearer ${localStorage.getItem('token')}`
       },
     });
 

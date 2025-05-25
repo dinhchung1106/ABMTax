@@ -20,6 +20,7 @@ return new class extends Migration
             $table->date('start_date')->nullable();
             $table->string('schedule')->nullable();
             $table->string('discount_info')->nullable();
+            $table->string('image')->nullable();
             $table->boolean('status')->default(1);
             $table->timestamps();
         });

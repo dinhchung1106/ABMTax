@@ -1,6 +1,6 @@
 @extends('frontend.layout')
 @section('title', $news->title . ' - Tin tức | ' . ($company->name ?? 'ABM Tax'))
-@section('meta_description', $news->keywords)
+@section('meta_description', $news->seo_keywords)
 @section('content')
 <!-- <section class="section py-5">
     <div class="container">
@@ -126,7 +126,7 @@
                                     Traveling around the world offers endless opportunities to explore diverse cultures,
                                     stunning landscapes, and historical landmarks. In this article, we will take you on
                                     a journey through some of the most iconic destinations around the globe,
-                                    highlighting the best sights and experiences each has to offer. Whether you’re an
+                                    highlighting the best sights and experiences each has to offer. Whether you're an
                                     adventure seeker, a history buff, or a nature lover, these destinations have
                                     something special for everyone.
                                 </div>
@@ -137,7 +137,7 @@
                                     <li class="text-body-2">Table Mountain: Take a cable car to the top for stunning
                                         views of the city and coastline.</li>
                                     <li class="text-body-2">Robben Island: Visit the prison where Nelson Mandela was
-                                        held and learn about South Africa’s history.</li>
+                                        held and learn about South Africa's history.</li>
                                 </ul>
                             </div>
                             <div class="wg-quote">
@@ -465,8 +465,8 @@
                                     </div>
                                 </div>
                                 <div class="text text-body-2">
-                                    chungdd (@chungdd) is a writer who draws. He’s the Bestselling author of
-                                    “Number of The Year”. Donec vitae tortor efficitur, convallis lelobortis elit.
+                                    chungdd (@chungdd) is a writer who draws. He's the Bestselling author of
+                                    "Number of The Year". Donec vitae tortor efficitur, convallis lelobortis elit.
                                 </div>
                             </div>
                             <div class="wg-relatest-post sidebar-content">

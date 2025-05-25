@@ -23,7 +23,7 @@ class NewsFactory extends Factory
             'content' => $this->faker->paragraph(5),
             'image' => $this->faker->imageUrl(400, 250, 'business', true, 'news'),
             'category' => $this->faker->randomElement(['Thuế', 'Kế toán', 'Hóa đơn điện tử', 'Khóa học']),
-            'keywords' => implode(',', $this->faker->words(5)),
+            'seo_keywords' => implode(',', $this->faker->words(5)),
             'status' => $this->faker->boolean(90),
         ];
     }

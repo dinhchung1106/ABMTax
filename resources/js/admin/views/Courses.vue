@@ -9,7 +9,7 @@
         <el-table-column prop="id" label="#" width="60" />
         <el-table-column prop="image" label="Ảnh" width="80">
           <template #default="{ row }">
-            <img v-if="row.image" :src="row.image" class="course-thumb" />
+            <img v-if="row.image_url" :src="row.image_url" class="course-thumb" />
             <span v-else>Không ảnh</span>
           </template>
         </el-table-column>
@@ -22,7 +22,9 @@
         <el-table-column prop="start_date" label="Khai giảng" width="120" />
         <el-table-column prop="status" label="Trạng thái" width="100">
           <template #default="{ row }">
-            <el-tag :type="row.status ? 'success' : 'info'">{{ row.status ? 'Hiện' : 'Ẩn' }}</el-tag>
+            <el-tag :type="row.status === 1 ? 'success' : (row.status === 2 ? 'danger' : 'info')">
+              {{ row.status === 1 ? 'Mở đăng ký' : (row.status === 2 ? 'Đã đóng' : 'Nháp') }}
+            </el-tag>
           </template>
         </el-table-column>
         <el-table-column label="Hành động" width="220">
@@ -49,16 +51,22 @@
       </div>
     </el-card>
 
-    <el-dialog :title="editCourse ? 'Sửa Khóa học' : 'Thêm Khóa học'" v-model="showDialog" width="500px">
-      <el-form :model="form" :rules="rules" ref="courseForm" label-width="110px">
+    <el-dialog :title="editCourse ? 'Sửa Khóa học' : 'Thêm Khóa học'" v-model="showDialog" width="50%">
+      <el-form :model="form" :rules="rules" ref="formRef" label-width="110px">
         <el-form-item label="Tên khóa học" prop="name">
           <el-input v-model="form.name" />
         </el-form-item>
-        <el-form-item label="Mô tả" prop="description">
-          <el-input v-model="form.description" type="textarea" rows="2" />
+        <el-form-item label="Mô tả" prop="description" class="description-editor-item">
+          <ckeditor :editor="ClassicEditor" v-model="form.description" :config="editorConfig"></ckeditor>
         </el-form-item>
         <el-form-item label="Học phí" prop="fee">
-          <el-input v-model.number="form.fee" type="number" min="0" />
+          <el-input 
+            v-model="form.fee" 
+            type="number" 
+            min="0" 
+            step="1000"
+            @input="form.fee = parseFloat($event.target.value) || 0"
+          />
         </el-form-item>
         <el-form-item label="Khai giảng" prop="start_date">
           <el-date-picker v-model="form.start_date" type="date" placeholder="Chọn ngày" format="YYYY-MM-DD" value-format="YYYY-MM-DD" />
@@ -66,25 +74,35 @@
         <el-form-item label="Lịch học" prop="schedule">
           <el-input v-model="form.schedule" />
         </el-form-item>
-        <el-form-item label="Ưu đãi" prop="discount_info">
-          <el-input v-model="form.discount_info" />
+        <el-form-item label="Giảm giá" prop="discount_type">
+          <el-select v-model="form.discount_type" placeholder="Chọn loại giảm giá" style="width: 120px; margin-right: 10px;">
+            <el-option label="Số tiền" value="fixed" />
+            <el-option label="Phần trăm" value="percentage" />
+          </el-select>
+          <el-input 
+            v-model.number="form.discount_value" 
+            type="number" 
+            min="0" 
+            style="width: 150px;" 
+            :placeholder="form.discount_type === 'percentage' ? 'Nhập %' : 'Nhập số tiền'"
+            :step="form.discount_type === 'percentage' ? 1 : 1000"
+          />
         </el-form-item>
         <el-form-item label="Ảnh" prop="image">
-          <el-upload
-            class="course-upload"
-            action="/api/news/upload-image"
-            :show-file-list="false"
-            :on-success="handleUploadSuccess"
-            :before-upload="beforeUpload"
-            :headers="uploadHeaders"
-            accept="image/*"
-          >
-            <img v-if="form.image" :src="form.image" class="course-image-preview" />
-            <el-button v-else size="small" type="primary">Chọn ảnh</el-button>
-          </el-upload>
+          <input type="file" accept="image/*" @change="onFileChange($event, 'image')" :key="mainImageInputKey"/>
+          <img :src="mainImagePreviewUrl || (editCourse && editCourse.image_url) || '/uploads/no-image-available.png'" 
+               alt="preview" 
+               style="max-width: 100px; margin-top: 6px; cursor: pointer;" 
+               @error="mainImagePreviewUrl = ''" 
+               @click="viewImage([mainImagePreviewUrl || (editCourse && editCourse.image_url) || '/uploads/no-image-available.png'], 0)"/>
+          <el-button v-if="mainImagePreviewUrl || (editCourse && editCourse.image)" type="text" @click="removeMainImage()">[x]</el-button>
         </el-form-item>
         <el-form-item label="Trạng thái" prop="status">
-          <el-switch v-model="form.status" active-text="Hiện" inactive-text="Ẩn" />
+          <el-select v-model="form.status" placeholder="Chọn trạng thái">
+            <el-option :value="1" label="Mở đăng ký" />
+            <el-option :value="2" label="Đã đóng" />
+            <el-option :value="3" label="Nháp" />
+          </el-select>
         </el-form-item>
       </el-form>
       <template #footer>
@@ -93,7 +111,7 @@
       </template>
     </el-dialog>
 
-    <course-lessons-dialog v-if="showLessonsDialog" :course="selectedCourse" @close="showLessonsDialog=false" />
+    <course-sessions-dialog v-if="showLessonsDialog" :course="selectedCourse" @close="showLessonsDialog=false" />
   </div>
 </template>
 
@@ -101,18 +119,73 @@
 import { ref, computed, onMounted, watch } from 'vue'
 import axios from 'axios'
 import { ElMessage, ElMessageBox } from 'element-plus'
-import CourseLessonsDialog from '../components/CourseLessonsDialog.vue'
+import CourseSessionsDialog from '../components/CourseSessionsDialog.vue'
 import { useImageUpload } from '../composables/useImageUpload'
+import { Ckeditor } from '@ckeditor/ckeditor5-vue'
+import ClassicEditor from '@ckeditor/ckeditor5-build-classic'
+import { ElImageViewer } from 'element-plus'
+
+// Add Course status constants
+const CourseStatus = {
+    STATUS_OPEN: 1,
+    STATUS_CLOSED: 2,
+    STATUS_DRAFT: 3
+}
 
 const courses = ref([])
 const loading = ref(false)
 const showDialog = ref(false)
 const saving = ref(false)
 const editCourse = ref(null)
-const form = ref({ name: '', description: '', fee: '', start_date: '', schedule: '', discount_info: '', image: '', status: true })
+const formRef = ref(null)
+const form = ref({
+    name: '',
+    description: '',
+    fee: '',
+    start_date: '',
+    schedule: '',
+    discount_type: 'fixed',
+    discount_value: '',
+    image: '',
+    status: CourseStatus.STATUS_OPEN
+})
 const rules = {
   name: [{ required: true, message: 'Vui lòng nhập tên khóa học', trigger: 'blur' }],
-  fee: [{ type: 'number', min: 0, message: 'Học phí phải >= 0', trigger: 'blur' }],
+  fee: [
+    { required: true, message: 'Vui lòng nhập học phí', trigger: 'blur' },
+    { 
+      validator: (rule, value, callback) => {
+        if (value === '' || value === null) {
+          callback();
+          return;
+        }
+        const num = parseFloat(value);
+        if (isNaN(num) || num < 0) {
+          callback(new Error('Học phí phải >= 0'));
+        } else {
+          callback();
+        }
+      },
+      trigger: 'blur'
+    }
+  ],
+  discount_value: [
+    { 
+      validator: (rule, value, callback) => {
+        if (value === '' || value === null) {
+          callback();
+          return;
+        }
+        const num = parseFloat(value);
+        if (isNaN(num) || num < 0) {
+          callback(new Error('Giá trị giảm giá phải >= 0'));
+        } else {
+          callback();
+        }
+      },
+      trigger: 'blur'
+    }
+  ]
 }
 const search = ref('')
 const showLessonsDialog = ref(false)
@@ -158,118 +231,121 @@ const filteredCourses = computed(() => {
   return courses.value;
 })
 
-// Use image upload composable for course image
 const {
-  imageFile: courseImageFile,
-  imagePreviewUrl: courseImagePreviewUrl,
-  imageInputKey: courseImageInputKey,
-  handleImageChange: handleCourseImageChange,
-  removeImage: removeCourseImage,
-  getImageUrl: getCourseImageUrl,
-  appendImageToFormData: appendCourseImageToFormData,
-  resetImageState: resetCourseImageState,
+  imageFile: mainImageFile,
+  imagePreviewUrl: mainImagePreviewUrl,
+  imageInputKey: mainImageInputKey,
+  handleImageChange: onFileChange,
+  removeImage: removeMainImage,
+  getImageUrl: getMainImageUrl,
+  appendImageToFormData: appendMainImageToFormData,
+  resetImageState: resetMainImageState,
 } = useImageUpload({
-  maxSize: 2048,
-  allowedTypes: ['image/jpeg', 'image/png', 'image/jpg', 'image/gif'],
+  maxSize: 4096, // 4MB
+  allowedTypes: ['image/jpeg', 'image/png', 'image/jpg', 'image/gif', 'image/webp'],
   storagePath: 'uploads/courses',
 });
 
 const openAdd = () => {
   editCourse.value = null;
-  form.value = { name: '', description: '', fee: '', start_date: '', schedule: '', discount_info: '', image: '', status: true };
-  resetCourseImageState();
+  form.value = { 
+    name: '', 
+    description: '', 
+    fee: '', 
+    start_date: '', 
+    schedule: '', 
+    discount_value: '',
+    discount_type: '',
+    image: '', 
+    status: CourseStatus.STATUS_OPEN 
+  };
+  resetMainImageState();
   showDialog.value = true;
 };
 
 const openEdit = (course) => {
   editCourse.value = course;
   form.value = { 
-    name: course.name, 
-    description: course.description, 
-    fee: course.fee, 
-    start_date: course.start_date, 
-    schedule: course.schedule, 
-    discount_info: course.discount_info, 
-    status: !!course.status 
+    name: course.name || '', 
+    description: course.description || '', 
+    fee: course.fee || '', 
+    start_date: course.start_date || '', 
+    schedule: course.schedule || '', 
+    discount_value: course.discount_value || '',
+    discount_type: course.discount_type || '',
+    status: course.status || CourseStatus.STATUS_OPEN,
+    image: course.image || ''
   };
-  resetCourseImageState();
-  courseImagePreviewUrl.value = getCourseImageUrl(course.image);
+  resetMainImageState();
+  mainImagePreviewUrl.value = course.image_url || '';
   showDialog.value = true;
 };
 
 const saveCourse = async () => {
-  if (!formRef.value) return;
-
-  try {
-    await formRef.value.validate();
-    saving.value = true;
-
-    const formData = new FormData();
+    if (!formRef.value) return
     
-    // Append course image
-    appendCourseImageToFormData(formData, 'image');
+    await formRef.value.validate(async (valid) => {
+        if (valid) {
+            try {
+                saving.value = true;
+                const formData = new FormData()
+                
+                // Debug log
+                console.log('Form data before sending:', form.value)
+                
+                // Add all form fields to FormData
+                Object.keys(form.value).forEach(key => {
+                    if (form.value[key] !== null && form.value[key] !== undefined) {
+                        if (key === 'image' && mainImageFile.value) {
+                            formData.append(key, mainImageFile.value)
+                            console.log('Adding image file:', mainImageFile.value)
+                        } else {
+                            formData.append(key, form.value[key])
+                            console.log(`Adding field ${key}:`, form.value[key])
+                        }
+                    }
+                })
 
-    // Append other fields
-    for (const key in form.value) {
-      if (key === 'status') {
-        formData.append(key, form.value[key] ? 1 : 0);
-      } else if (key !== 'image') {
-        if (form.value[key] !== null && form.value[key] !== undefined) {
-          formData.append(key, form.value[key]);
+                // Debug log for FormData
+                for (let pair of formData.entries()) {
+                    console.log(pair[0] + ': ' + pair[1])
+                }
+
+                let response;
+                if (editCourse.value) {
+                    // For PUT request, we need to use _method=PUT
+                    formData.append('_method', 'PUT')
+                    response = await axios.post(`/api/courses/${editCourse.value.id}`, formData, {
+                        headers: {
+                            'Content-Type': 'multipart/form-data',
+                            'Accept': 'application/json'
+                        }
+                    })
+                } else {
+                    response = await axios.post('/api/courses', formData, {
+                        headers: {
+                            'Content-Type': 'multipart/form-data',
+                            'Accept': 'application/json'
+                        }
+                    })
+                }
+                
+                ElMessage.success('Lưu khóa học thành công')
+                showDialog.value = false
+                fetchCourses()
+            } catch (error) {
+                console.error('Error saving course:', error)
+                if (error.response?.data?.message) {
+                    ElMessage.error(error.response.data.message)
+                } else {
+                    ElMessage.error('Có lỗi xảy ra khi lưu khóa học')
+                }
+            } finally {
+                saving.value = false
+            }
         }
-      }
-    }
-
-    // Handle image removal
-    if (editCourse.value) {
-      if (!courseImageFile.value && !editCourse.value.image) {
-        formData.append('remove_image', 1);
-      }
-    }
-
-    let response;
-    const apiUrl = editCourse.value
-      ? `/courses/${editCourse.value.id}`
-      : '/courses';
-
-    if (editCourse.value) {
-      formData.append('_method', 'PUT');
-      response = await axios.post(apiUrl, formData, {
-        headers: {
-          'Content-Type': 'multipart/form-data',
-        },
-      });
-      ElMessage.success('Cập nhật khóa học thành công!');
-    } else {
-      response = await axios.post(apiUrl, formData, {
-        headers: {
-          'Content-Type': 'multipart/form-data',
-        },
-      });
-      ElMessage.success('Thêm khóa học thành công!');
-    }
-
-    showDialog.value = false;
-    fetchCourses();
-  } catch (error) {
-    console.error('Error saving course:', error);
-    if (error.response && error.response.status === 422) {
-      const errors = error.response.data.errors;
-      let errorMsg = 'Lỗi xác thực:<br>';
-      for (const field in errors) {
-        errorMsg += `- ${errors[field].join(', ')}<br>`;
-      }
-      ElMessageBox.alert(errorMsg, 'Lỗi', {
-        dangerouslyUseHTMLString: true,
-        confirmButtonText: 'OK',
-      });
-    } else {
-      ElMessage.error('Lỗi khi lưu khóa học!');
-    }
-  } finally {
-    saving.value = false;
-  }
-};
+    })
+}
 
 const removeCourse = async (id) => {
   try {
@@ -280,17 +356,13 @@ const removeCourse = async (id) => {
     ElMessage.error('Không thể xóa khóa học!')
   }
 }
-const handleUploadSuccess = (res) => {
-  form.value.image = res.url
-}
-const beforeUpload = (file) => {
-  const isImage = file.type.startsWith('image/')
-  const isLt2M = file.size / 1024 / 1024 < 2
-  if (!isImage) ElMessage.error('Chỉ chọn file ảnh!')
-  if (!isLt2M) ElMessage.error('Ảnh phải nhỏ hơn 2MB!')
-  return isImage && isLt2M
-}
+
 const openLessons = (course) => {
+  if (!course || !course.id) {
+    ElMessage.error('Không tìm thấy thông tin khóa học')
+    return
+  }
+  console.log('Opening lessons for course:', course)
   selectedCourse.value = course
   showLessonsDialog.value = true
 }
@@ -298,6 +370,8 @@ const openLessons = (course) => {
 const handlePageChange = (newPage) => {
   fetchCourses({ page: newPage, search: search.value });
 };
+
+const editorConfig = ref({ minHeight: '200px' })
 
 onMounted(() => fetchCourses({ page: 1 }));
 </script>
@@ -333,5 +407,9 @@ onMounted(() => fetchCourses({ page: 1 }));
   margin-top: 16px;
   display: flex;
   justify-content: flex-end;
+}
+/* Adjust line spacing within CKEditor */
+.description-editor-item .ck-editor__editable p {
+  margin-bottom: 0.5em; /* Adjust this value as needed */
 }
 </style> 

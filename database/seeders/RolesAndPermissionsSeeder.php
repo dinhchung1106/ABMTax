@@ -52,6 +52,13 @@ class RolesAndPermissionsSeeder extends Seeder
         Permission::findOrCreate('view_report');
         Permission::findOrCreate('manage_roles_and_permissions');
 
+        // Add Contact permissions
+        Permission::findOrCreate('view_contacts');
+        Permission::findOrCreate('delete_contacts');
+
+        // Add Company Info permissions
+        Permission::findOrCreate('edit_company_info');
+
         // Add Slider Banner permissions
         Permission::findOrCreate('view_slider_banners');
         Permission::findOrCreate('create_slider_banner');
@@ -84,7 +91,7 @@ class RolesAndPermissionsSeeder extends Seeder
             'create_post', 'edit_post', 'delete_post',
             'create_service', 'edit_service', 'delete_service',
             // Assuming Content Manager can also manage Company Info (edit)
-            'edit_service', // Reusing edit_service permission for simplicity or create a specific one like 'edit_company_info'
+            'edit_company_info',
 
             // Add Slider Banner permissions for Content Manager
             'view_slider_banners',
@@ -103,6 +110,11 @@ class RolesAndPermissionsSeeder extends Seeder
             'create_tag',
             'edit_tag',
             'delete_tag',
+
+            // Add Contact permissions for Content Manager
+            'view_contacts',
+            'delete_contacts',
+            'view_company_info',
         ];
         $contentManagerRole->givePermissionTo($contentPermissions);
 
