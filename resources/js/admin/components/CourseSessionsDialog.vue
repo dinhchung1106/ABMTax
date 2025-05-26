@@ -1,5 +1,5 @@
 <template>
-  <el-dialog :title="'Quản lý buổi học - ' + course.name" v-model="show" width="900px" @close="$emit('close')">
+  <el-dialog :title="'Quản lý buổi học - ' + course.name" v-model="show" width="1100px" @close="$emit('close')">
     <div class="sessions-container">
       <!-- Sessions List -->
       <div class="sessions-list">
@@ -10,13 +10,13 @@
         
         <el-table :data="sessions" style="width:100%" v-loading="loading" row-key="id">
           <el-table-column prop="order" label="#" width="60" />
-          <el-table-column prop="title" label="Tên buổi học" />
+          <el-table-column prop="title" label="Tên buổi học" show-overflow-tooltip />
           <el-table-column prop="date" label="Ngày học" width="120">
             <template #default="{ row }">
               {{ formatDate(row.date) }}
             </template>
           </el-table-column>
-          <el-table-column label="Hành động" width="200">
+          <el-table-column label="Hành động" width="250">
             <template #default="{ row }">
               <el-button size="small" @click="openEditSession(row)">Sửa</el-button>
               <el-button size="small" type="danger" @click="removeSession(row.id)">Xóa</el-button>
@@ -68,7 +68,7 @@
     </el-dialog>
 
     <!-- Lesson Form Dialog -->
-    <el-dialog :title="editLesson ? 'Sửa bài học' : 'Thêm bài học'" v-model="showLessonForm" width="500px" append-to-body>
+    <el-dialog :title="editLesson ? 'Sửa bài học' : 'Thêm bài học - ' + selectedSession?.title" v-model="showLessonForm" width="500px" append-to-body>
       <el-form :model="lessonForm" :rules="lessonRules" ref="lessonFormRef" label-width="110px">
         <el-form-item label="Tên bài học" prop="title">
           <el-input v-model="lessonForm.title" />
@@ -317,19 +317,23 @@ onMounted(fetchSessions)
 <style scoped>
 .sessions-container {
   display: flex;
+  flex-direction: column;
   gap: 20px;
 }
 
 .sessions-list {
-  flex: 1;
-  min-width: 400px;
+  flex: none;
+  min-width: auto;
+  width: 100%;
 }
 
 .lessons-list {
-  flex: 1;
-  min-width: 400px;
-  border-left: 1px solid #eee;
-  padding-left: 20px;
+  flex: none;
+  min-width: auto;
+  width: 100%;
+  border-left: none;
+  padding-left: 0;
+  margin-top: 20px;
 }
 
 .sessions-header,

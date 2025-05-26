@@ -16,7 +16,8 @@ class Lesson extends Model
         'description',
         'content',
         'order',
-        'status'
+        'status',
+        'duration'
     ];
 
     /**

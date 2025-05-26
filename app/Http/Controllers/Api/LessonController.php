@@ -6,6 +6,8 @@ use App\Http\Controllers\Controller;
 use Illuminate\Http\Request;
 use App\Models\Lesson;
 use App\Models\Course;
+use App\Models\Session;
+use Illuminate\Support\Facades\Validator;
 
 class LessonController extends Controller
 {
@@ -16,36 +18,46 @@ class LessonController extends Controller
         return response()->json($lessons);
     }
 
-    // Thêm bài học mới vào khóa học
-    public function store(Request $request, $courseId)
+    // Thêm bài học mới vào buổi học
+    public function store(Request $request, Session $session)
     {
-        $data = $request->validate([
-            'name' => 'required|string|max:255',
+        $validator = Validator::make($request->all(), [
+            'title' => 'required|string|max:255',
             'description' => 'nullable|string',
             'duration' => 'nullable|integer|min:1',
             'order' => 'nullable|integer',
-            'status' => 'nullable|boolean',
+            'course_id' => 'required|exists:courses,id',
         ]);
-        $data['course_id'] = $courseId;
-        if (!isset($data['order'])) {
-            $maxOrder = Lesson::where('course_id', $courseId)->max('order');
-            $data['order'] = $maxOrder + 1;
+
+        if ($validator->fails()) {
+            return response()->json(['errors' => $validator->errors()], 422);
         }
-        $lesson = Lesson::create($data);
+
+        $data = $validator->validated();
+
+        $lesson = $session->lessons()->create($data);
+        
         return response()->json($lesson, 201);
     }
 
     // Cập nhật bài học
-    public function update(Request $request, $id)
+    public function update(Request $request, Lesson $lesson)
     {
-        $lesson = Lesson::findOrFail($id);
-        $data = $request->validate([
-            'name' => 'required|string|max:255',
+        $validator = Validator::make($request->all(), [
+            'title' => 'required|string|max:255',
             'description' => 'nullable|string',
             'duration' => 'nullable|integer|min:1',
             'order' => 'nullable|integer',
-            'status' => 'nullable|boolean',
+            'session_id' => 'required|exists:sessions,id',
+            'course_id' => 'required|exists:courses,id',
         ]);
+
+        if ($validator->fails()) {
+            return response()->json(['errors' => $validator->errors()], 422);
+        }
+        
+        $data = $validator->validated();
+
         $lesson->update($data);
         return response()->json($lesson);
     }
