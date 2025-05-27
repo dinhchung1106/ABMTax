@@ -75,6 +75,11 @@ const routes = [
         component: () => import('../views/TagManagement.vue')
     },
     {
+        path: '/admin/collaborators',
+        name: 'admin.collaborators',
+        component: () => import('../views/Collaborators.vue')
+    },
+    {
         path: '/admin/contacts',
         name: 'Contacts',
         component: () => import('../views/Contacts.vue')

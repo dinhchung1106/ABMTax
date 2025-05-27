@@ -45,6 +45,7 @@ class RolesAndPermissionsSeeder extends Seeder
 
         Permission::findOrCreate('approve_collaborator');
         Permission::findOrCreate('reject_collaborator');
+        Permission::findOrCreate('view_collaborators');
         Permission::findOrCreate('reply_contact');
         Permission::findOrCreate('view_company_info');
 
@@ -128,6 +129,7 @@ class RolesAndPermissionsSeeder extends Seeder
 
         $collaboratorPermissions = [
             'approve_collaborator', 'reject_collaborator',
+            'view_collaborators',
             'view_contact' // Maybe Collaborator Manager can also view contacts?
         ];
         $collaboratorManagerRole->givePermissionTo($collaboratorPermissions);

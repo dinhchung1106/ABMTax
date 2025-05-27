@@ -8,7 +8,7 @@
           <el-button type="primary" @click="openAddSession">Thêm buổi học</el-button>
         </div>
         
-        <el-table :data="sessions" style="width:100%" v-loading="loading" row-key="id">
+        <el-table :data="sessions" style="width:100%" v-loading="loading" row-key="id" :row-class-name="isSessionActive">
           <el-table-column prop="order" label="#" width="60" />
           <el-table-column prop="title" label="Tên buổi học" show-overflow-tooltip />
           <el-table-column prop="date" label="Ngày học" width="120">
@@ -153,6 +153,10 @@ const lessonRules = {
 // Methods
 const formatDate = (date) => {
   return new Date(date).toLocaleDateString('vi-VN')
+}
+
+const isSessionActive = ({ row }) => {
+  return selectedSession.value && selectedSession.value.id === row.id ? 'active-session-row' : '';
 }
 
 const fetchSessions = async () => {
@@ -348,5 +352,11 @@ h3 {
   margin: 0;
   font-size: 16px;
   font-weight: 600;
+}
+
+/* Add styling for active session row */
+::v-deep(.active-session-row) {
+  background-color: #e6f7ff !important; /* Example background color */
+  font-weight: bold;
 }
 </style> 

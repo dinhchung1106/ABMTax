@@ -2,34 +2,6 @@
 @section('title', 'Tuyển Cộng Tác Viên - ' . ($company->name ?? 'ABM Tax'))
 @section('meta_description', 'Đăng ký trở thành cộng tác viên của ' . ($company->name ?? 'ABM Tax'))
 @section('content')
-<!-- <section class="section py-5">
-    <div class="container">
-        <h1 class="section-title text-center mb-4">Tuyển Cộng Tác Viên</h1>
-        <div class="row justify-content-center">
-            <div class="col-lg-7">
-                <form method="POST" action="#">
-                    <div class="mb-3">
-                        <label for="name" class="form-label">Họ tên</label>
-                        <input type="text" class="form-control" id="name" name="name" required>
-                    </div>
-                    <div class="mb-3">
-                        <label for="email" class="form-label">Email</label>
-                        <input type="email" class="form-control" id="email" name="email" required>
-                    </div>
-                    <div class="mb-3">
-                        <label for="phone" class="form-label">Số điện thoại</label>
-                        <input type="text" class="form-control" id="phone" name="phone" required>
-                    </div>
-                    <div class="mb-3">
-                        <label for="message" class="form-label">Giới thiệu bản thân</label>
-                        <textarea class="form-control" id="message" name="message" rows="4" required></textarea>
-                    </div>
-                    <button type="submit" class="btn btn-primary px-4 fw-bold">Gửi đăng ký</button>
-                </form>
-            </div>
-        </div>
-    </div>
-</section> -->
 
 <!-- Page-title -->
 <div class="page-title tf-spacing-4">
@@ -312,7 +284,7 @@
                             <div class="col-12 pb-30">
                                 <div class="tour-layout-list hover-img wow fadeInUp">
                                     <div class="image">
-                                        <a href="{{ route('courses.show', 1) }}">
+                                        <a href="{{ route('frontend.courses.show', 1) }}">
                                             <img src="image/tour-grid/tour-layout-list-1.jpg"
                                             data-src="image/tour-grid/tour-layout-list-1.jpg" alt="" class="lazyload">
                                         </a>
@@ -344,7 +316,7 @@
                                             </div>
                                         </div>
                                         <div class="title text-body-2 fw-6 pb-7">
-                                            <a href="{{ route('courses.show', 1) }}">
+                                            <a href="{{ route('frontend.courses.show', 1) }}">
                                                 Conquer Stunning Trails and Scenic Paths
                                             </a>
                                         </div>
@@ -368,7 +340,7 @@
                             <div class="col-12 pb-30">
                                 <div class="tour-layout-list hover-img wow fadeInUp">
                                     <div class="image">
-                                        <a href="{{ route('courses.show', 1) }}">
+                                        <a href="{{ route('frontend.courses.show', 1) }}">
                                             <img src="image/tour-grid/tour-layout-list-2.jpg"
                                             data-src="image/tour-grid/tour-layout-list-2.jpg" alt="" class="lazyload">
                                         </a>
@@ -400,7 +372,7 @@
                                             </div>
                                         </div>
                                         <div class="title text-body-2 fw-6 pb-7">
-                                            <a href="{{ route('courses.show', 1) }}">
+                                            <a href="{{ route('frontend.courses.show', 1) }}">
                                                 Uncover Hidden Historical Wonders and Secrets
                                             </a>
                                         </div>
@@ -424,7 +396,7 @@
                             <div class="col-12 pb-30">
                                 <div class="tour-layout-list hover-img wow fadeInUp">
                                     <div class="image">
-                                        <a href="{{ route('courses.show', 1) }}">
+                                        <a href="{{ route('frontend.courses.show', 1) }}">
                                             <img src="image/tour-grid/tour-layout-list-3.jpg"
                                             data-src="image/tour-grid/tour-layout-list-3.jpg" alt="" class="lazyload">
                                         </a>
@@ -456,7 +428,7 @@
                                             </div>
                                         </div>
                                         <div class="title text-body-2 fw-6 pb-7">
-                                            <a href="{{ route('courses.show', 1) }}">
+                                            <a href="{{ route('frontend.courses.show', 1) }}">
                                                 Experience the Mysteries of the Ancient World
                                             </a>
                                         </div>
@@ -480,7 +452,7 @@
                             <div class="col-12 pb-30">
                                 <div class="tour-layout-list hover-img wow fadeInUp">
                                     <div class="image">
-                                        <a href="{{ route('courses.show', 1) }}">
+                                        <a href="{{ route('frontend.courses.show', 1) }}">
                                             <img src="image/tour-grid/tour-layout-list-4.jpg"
                                             data-src="image/tour-grid/tour-layout-list-4.jpg" alt="" class="lazyload">
                                         </a>
@@ -512,7 +484,7 @@
                                             </div>
                                         </div>
                                         <div class="title text-body-2 fw-6 pb-7">
-                                            <a href="{{ route('courses.show', 1) }}">
+                                            <a href="{{ route('frontend.courses.show', 1) }}">
                                                 Explore Majestic Rivers and Waterways
                                             </a>
                                         </div>
@@ -536,7 +508,7 @@
                             <div class="col-12 pb-30">
                                 <div class="tour-layout-list hover-img wow fadeInUp">
                                     <div class="image">
-                                        <a href="{{ route('courses.show', 1) }}">
+                                        <a href="{{ route('frontend.courses.show', 1) }}">
                                             <img src="image/tour-grid/tour-layout-list-5.jpg"
                                             data-src="image/tour-grid/tour-layout-list-5.jpg" alt="" class="lazyload">
                                         </a>
@@ -568,7 +540,7 @@
                                             </div>
                                         </div>
                                         <div class="title text-body-2 fw-6 pb-7">
-                                            <a href="{{ route('courses.show', 1) }}">
+                                            <a href="{{ route('frontend.courses.show', 1) }}">
                                                 Retreat in Nature’s Untouched Beauty
                                             </a>
                                         </div>
@@ -592,7 +564,7 @@
                             <div class="col-12">
                                 <div class="tour-layout-list hover-img wow fadeInUp">
                                     <div class="image">
-                                        <a href="{{ route('courses.show', 1) }}">
+                                        <a href="{{ route('frontend.courses.show', 1) }}">
                                             <img src="image/tour-grid/tour-layout-list-6.jpg"
                                             data-src="image/tour-grid/tour-layout-list-6.jpg" alt="" class="lazyload">
                                         </a>
@@ -624,7 +596,7 @@
                                             </div>
                                         </div>
                                         <div class="title text-body-2 fw-6 pb-7">
-                                            <a href="{{ route('courses.show', 1) }}">
+                                            <a href="{{ route('frontend.courses.show', 1) }}">
                                                 Journey Through Rich Culture and History
                                             </a>
                                         </div>

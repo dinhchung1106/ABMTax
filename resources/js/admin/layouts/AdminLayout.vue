@@ -17,6 +17,10 @@
         <el-menu-item index="/admin/courses"><el-icon><Reading /></el-icon><span>Courses</span></el-menu-item>
         <el-menu-item index="/admin/contacts"><el-icon><Message /></el-icon><span>Contacts</span></el-menu-item>
         <el-menu-item index="/admin/slider-banners"><el-icon><Picture /></el-icon><span>Quản lý Slider Banner</span></el-menu-item>
+        <el-menu-item index="/admin/collaborators">
+          <el-icon><UserFilled /></el-icon>
+          <span>Cộng tác viên</span>
+        </el-menu-item>
         <el-menu-item index="/admin/company-info">
           <el-icon><OfficeBuilding /></el-icon>
           <span>Thông tin công ty</span>
@@ -72,7 +76,7 @@
 import { ref } from 'vue'
 import { useRouter } from 'vue-router'
 import { ElIcon } from 'element-plus'
-import { Odometer, User, Suitcase, Document, Reading, Message, OfficeBuilding, Lock, EditPen, Picture, Folder, CollectionTag } from '@element-plus/icons-vue'
+import { Odometer, User, Suitcase, Document, Reading, Message, OfficeBuilding, Lock, EditPen, Picture, Folder, CollectionTag, UserFilled } from '@element-plus/icons-vue'
 
 const router = useRouter()
 const collapsed = ref(false)

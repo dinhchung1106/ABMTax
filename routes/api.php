@@ -15,6 +15,7 @@ use App\Http\Controllers\Api\CategoryController;
 use App\Http\Controllers\Api\TagController;
 use App\Http\Controllers\Admin\SessionController;
 use App\Http\Controllers\Admin\LessonController as AdminLessonController;
+use App\Http\Controllers\Api\CollaboratorController;
 
 /*
 |--------------------------------------------------------------------------
@@ -144,4 +145,8 @@ Route::middleware(['auth:sanctum', 'admin'])->group(function () {
     Route::post('/sessions/{session}/lessons', [AdminLessonController::class, 'store'])->middleware('permission:edit_course,sanctum');
     Route::put('/lessons/{lesson}', [AdminLessonController::class, 'update'])->middleware('permission:edit_course,sanctum');
     Route::delete('/lessons/{lesson}', [AdminLessonController::class, 'destroy'])->middleware('permission:edit_course,sanctum');
+
+    // Collaborator Routes
+    Route::get('/collaborators', [CollaboratorController::class, 'index'])->middleware('permission:view_collaborators,sanctum');
+    Route::put('/collaborators/{collaborator}/status', [CollaboratorController::class, 'updateStatus'])->middleware('permission:approve_collaborator,sanctum');
 });
